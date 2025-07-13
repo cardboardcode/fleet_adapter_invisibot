@@ -1,11 +1,11 @@
 ## **What Is This?**
 
-A RMF Fleet Adapter that bridges interaction between Open-RMF and [invisibot](https://github.com/cardboardcode/invisibot)
+A RMF Fleet Adapter that bridges interaction between Open-RMF and [invisibot](https://github.com/cardboardcode/invisibot).
 
 ## **Build**
 
 ```bash
-
+docker build -t fleet_adapter_invisibot:jazzy .
 ```
 
 ## **Configuration(s)**
@@ -20,7 +20,18 @@ The `config.yaml` file contains important parameters for setting up the fleet ad
 ## **Run**
 
 ```bash
-
+docker run -it --rm \
+	--name fleet_adapter_invisibot_c \
+	--network host \
+	-e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+	-v ./fleet_adapter_invisibot/config.yaml:/fleet_adapter_invisibot_ws/src/fleet_adapter_invisibot/config.yaml \
+    -v ./fleet_adapter_invisibot/nav_graph.yaml:/fleet_adapter_invisibot_ws/src/fleet_adapter_invisibot/nav_graph.yaml \
+fleet_adapter_invisibot:jazzy bash -c \
+"source /ros_entrypoint.sh && \
+ros2 run fleet_adapter_invisibot fleet_adapter \
+-c /fleet_adapter_invisibot_ws/src/fleet_adapter_invisibot/config.yaml \
+-n /fleet_adapter_invisibot_ws/src/fleet_adapter_invisibot/nav_graph.yaml \
+-s ws://localhost:8000/_internal"
 ```
 
 ## **Maintainer(s)**
