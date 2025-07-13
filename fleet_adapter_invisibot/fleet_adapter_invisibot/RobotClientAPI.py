@@ -35,7 +35,9 @@ class RobotAPI:
         self.timeout = 5.0
         self.debug = False
 
+        print(f"self.is_able_to_connect() = {self.is_able_to_connect()}")
         while not self.is_able_to_connect():
+            print(f"self.is_able_to_connect() = {self.is_able_to_connect()}")
             self.logger.warn(f"Failed to connect to invisibot. Reattempting after 5 seconds...")
             time.sleep(5)
 
@@ -93,8 +95,6 @@ class RobotAPI:
             
             if response.status_code == 200:
                 self.logger.info(f"Response Body: {response.text}")
-                if self.target_waypoint is None:
-                    self.target_waypoint = pose
                 return True
 
             self.logger.info(f"Response Body: {response.text}")
@@ -154,7 +154,7 @@ class RobotAPI:
         ''' Return the state of charge of the robot as a value between 0.0
         and 1.0. Else return None if any errors are encountered. '''
         robot_status = self.get_robot_status()
-        return robot_status["data"]["battery"]
+        return float(robot_status["data"]["battery"]/100.0)
 
     def map(self, robot_name: str):
         ''' Return the name of the map that the robot is currently on or
@@ -165,10 +165,8 @@ class RobotAPI:
     def is_command_completed(self):
         ''' Return True if the robot has completed its last command, else
         return False. '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return False
+        robot_status = self.get_robot_status()
+        return robot_status["data"]["completed_request"]
 
     def get_robot_status(self):
         path="http://localhost:8080/status/"
