@@ -1,6 +1,6 @@
 ## **What Is This?**
 
-A RMF Fleet Adapter that bridges interaction between Open-RMF and [invisibot](https://github.com/cardboardcode/invisibot).
+A RMF Fleet Adapter that bridges interactions between Open-RMF and an [invisibot](https://github.com/cardboardcode/invisibot).
 
 ## **Build**
 
