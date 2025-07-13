@@ -122,7 +122,7 @@ def main(argv=sys.argv):
 
     # Initialize robot API for this fleet
     fleet_mgr_yaml = config_yaml['fleet_manager']
-    api = RobotAPI(fleet_mgr_yaml)
+    api = RobotAPI(fleet_mgr_yaml, node.get_logger())
 
     robots = {}
     for robot_name in fleet_config.known_robots:
