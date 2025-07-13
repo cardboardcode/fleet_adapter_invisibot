@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import json
+import time
+import requests
+from urllib.error import HTTPError
 
 '''
     The RobotAPI class is a wrapper for API calls to the robot. Here users
@@ -32,12 +35,30 @@ class RobotAPI:
         self.timeout = 5.0
         self.debug = False
 
-    def check_connection(self):
-        ''' Return True if connection to the robot API server is successful '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return True
+        while not self.is_able_to_connect():
+            self.logger.warn(f"Failed to connect to invisibot. Reattempting after 5 seconds...")
+            time.sleep(5)
+
+    def is_able_to_connect(self) -> bool:
+        ''' Return True if connection to the robot API server is successfull'''
+        path=f"{self.prefix}/status"
+        try:
+            response = requests.get(path)
+            response.raise_for_status()  # Raise an exception for HTTP errors (4xx or 5xx)
+
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+        except requests.exceptions.ConnectionError as e:
+            print(f"Error: Could not connect to the server at {path}. Please ensure the server is running.")
+            return False
+        except requests.exceptions.Timeout:
+            print(f"Error: The request to {path} timed out.")
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"An unexpected error occurred: {e}")
+            return False
 
     def navigate(
         self,
@@ -50,9 +71,37 @@ class RobotAPI:
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
             else False '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
+        url = self.prefix + f"/navigate_to_pose?robot_name={robot_name}"
+
+        headers = {'Content-Type': 'application/json'}
+        self.logger.warn(f"Sending Navigation Goal...")
+
+        payload = {
+          "timestamp": 0,
+          "x": pose[0],
+          "y": pose[1],
+          "yaw": pose[2],
+          "obey_approach_speed_limit": False,
+          "approach_speed_limit": speed_limit,
+          "level_name": map_name,
+          "index": 0
+        }
+
+        try:
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            response.raise_for_status()
+            
+            if response.status_code == 200:
+                self.logger.info(f"Response Body: {response.text}")
+                if self.target_waypoint is None:
+                    self.target_waypoint = pose
+                return True
+
+            self.logger.info(f"Response Body: {response.text}")
+        except HTTPError as http_err:
+            self.logger.error(f"HTTP error: {http_err}")
+        except Exception as err:
+            self.logger.error(f"In [navigate]: Other error: {err}")
         return False
 
     def start_activity(
@@ -71,37 +120,47 @@ class RobotAPI:
         # ------------------------ #
         return False
 
-    def stop(self, robot_name: str):
+    def stop(self, robot_name: str) -> bool:
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False. '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return False
+        path="http://localhost:8080/stop/"
+        try:
+            response = requests.post(path) # Use json=data for application/json content-type
+
+            # Check for a 200 OK status explicitly
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+
+        except requests.exceptions.ConnectionError as e:
+            print(f"Error: Could not connect to the server at {path}. Please ensure the server is running.")
+            return False
+        except requests.exceptions.Timeout:
+            print(f"Error: The POST request to {path} timed out.")
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"An unexpected error occurred during the POST request: {e}")
+            return False
 
     def position(self, robot_name: str):
         ''' Return [x, y, theta] expressed in the robot's coordinate frame or
         None if any errors are encountered '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return None
+        robot_status = self.get_robot_status()
+        robot_pos = [robot_status["data"]["position"]["x"], robot_status["data"]["position"]["y"], robot_status["data"]["position"]["yaw"]]
+        return robot_pos
 
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
         and 1.0. Else return None if any errors are encountered. '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return None
+        robot_status = self.get_robot_status()
+        return robot_status["data"]["battery"]
 
     def map(self, robot_name: str):
         ''' Return the name of the map that the robot is currently on or
         None if any errors are encountered. '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return None
+        robot_status = self.get_robot_status()
+        return robot_status["data"]["map_name"]
 
     def is_command_completed(self):
         ''' Return True if the robot has completed its last command, else
@@ -110,6 +169,25 @@ class RobotAPI:
         # IMPLEMENT YOUR CODE HERE #
         # ------------------------ #
         return False
+
+    def get_robot_status(self):
+        path="http://localhost:8080/status/"
+        headers = {
+            "accept": "application/json"
+        }
+        try:
+            response = requests.get(path, headers=headers)
+            response.raise_for_status()  # Raise an exception for HTTP errors (4xx or 5xx)
+            return response.json()
+        except requests.exceptions.ConnectionError as e:
+            print(f"Error: Could not connect to the server at {path}. Please ensure the server is running.")
+            return None
+        except requests.exceptions.Timeout:
+            print(f"Error: The request to {path} timed out.")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
 
     def get_data(self, robot_name: str):
         ''' Returns a RobotUpdateData for one robot if a name is given. Otherwise
