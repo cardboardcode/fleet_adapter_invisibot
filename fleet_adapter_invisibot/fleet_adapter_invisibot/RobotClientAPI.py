@@ -198,7 +198,10 @@ class RobotAPI:
         ''' Return True if the robot has completed its last command, else
         return False. '''
         robot_status = self.get_robot_status()
-        return robot_status["data"]["completed_request"]
+        if robot_status:
+            return robot_status["data"]["completed_request"]
+        else:
+            return True
 
     def get_robot_status(self):
         path="http://localhost:8080/status"
