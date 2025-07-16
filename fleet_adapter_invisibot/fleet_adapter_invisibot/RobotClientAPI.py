@@ -123,9 +123,32 @@ class RobotAPI:
     def stop(self, robot_name: str) -> bool:
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False. '''
-        path="http://localhost:8080/stop/"
+        path="http://localhost:8080/stop"
         try:
-            response = requests.post(path) # Use json=data for application/json content-type
+            response = requests.post(path)
+
+            # Check for a 200 OK status explicitly
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+
+        except requests.exceptions.ConnectionError as e:
+            print(f"Error: Could not connect to the server at {path}. Please ensure the server is running.")
+            return False
+        except requests.exceptions.Timeout:
+            print(f"Error: The POST request to {path} timed out.")
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"An unexpected error occurred during the POST request: {e}")
+            return False
+
+    def change_map(self, robot_name: str, map_name: str):
+        ''' Command the robot to change map.
+            Return True if robot has successfully changed map. Else False. '''
+        path=f"http://localhost:8080/map_switch?robot_name={robot_name}&map={map_name}"
+        try:
+            response = requests.post(path)
 
             # Check for a 200 OK status explicitly
             if response.status_code == 200:
@@ -147,20 +170,29 @@ class RobotAPI:
         ''' Return [x, y, theta] expressed in the robot's coordinate frame or
         None if any errors are encountered '''
         robot_status = self.get_robot_status()
-        robot_pos = [robot_status["data"]["position"]["x"], robot_status["data"]["position"]["y"], robot_status["data"]["position"]["yaw"]]
-        return robot_pos
+        if robot_status:
+            robot_pos = [robot_status["data"]["position"]["x"], robot_status["data"]["position"]["y"], robot_status["data"]["position"]["yaw"]]
+            return robot_pos
+        else:
+            return None
 
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
         and 1.0. Else return None if any errors are encountered. '''
         robot_status = self.get_robot_status()
-        return float(robot_status["data"]["battery"]/100.0)
+        if robot_status:
+            return float(robot_status["data"]["battery"]/100.0)
+        else:
+            return None
 
     def map(self, robot_name: str):
         ''' Return the name of the map that the robot is currently on or
         None if any errors are encountered. '''
         robot_status = self.get_robot_status()
-        return robot_status["data"]["map_name"]
+        if robot_status:
+            return robot_status["data"]["map_name"]
+        else:
+            return None
 
     def is_command_completed(self):
         ''' Return True if the robot has completed its last command, else
@@ -169,7 +201,7 @@ class RobotAPI:
         return robot_status["data"]["completed_request"]
 
     def get_robot_status(self):
-        path="http://localhost:8080/status/"
+        path="http://localhost:8080/status"
         headers = {
             "accept": "application/json"
         }
