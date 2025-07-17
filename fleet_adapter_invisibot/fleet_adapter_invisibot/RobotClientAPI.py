@@ -43,7 +43,7 @@ class RobotAPI:
 
     def is_able_to_connect(self) -> bool:
         ''' Return True if connection to the robot API server is successfull'''
-        path=f"{self.prefix}/status"
+        path= self.prefix + f"/ping"
         try:
             response = requests.get(path)
             response.raise_for_status()  # Raise an exception for HTTP errors (4xx or 5xx)
@@ -73,7 +73,10 @@ class RobotAPI:
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
             else False '''
-        url = self.prefix + f"/navigate_to_pose?robot_name={robot_name}"
+        url = self.prefix + f"/navigate_to_pose"
+        params = {
+            "robot_name": robot_name
+        }
 
         headers = {'Content-Type': 'application/json'}
         self.logger.warn(f"Sending Navigation Goal...")
@@ -90,7 +93,7 @@ class RobotAPI:
         }
 
         try:
-            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            response = requests.post(url, headers=headers, data=json.dumps(payload), params=params)
             response.raise_for_status()
             
             if response.status_code == 200:
@@ -124,6 +127,9 @@ class RobotAPI:
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False. '''
         path="http://localhost:8080/stop"
+        params = {
+            "robot_name": robot_name
+        }
         try:
             response = requests.post(path)
 
@@ -146,9 +152,13 @@ class RobotAPI:
     def change_map(self, robot_name: str, map_name: str):
         ''' Command the robot to change map.
             Return True if robot has successfully changed map. Else False. '''
-        path=f"http://localhost:8080/map_switch?robot_name={robot_name}&map={map_name}"
+        path=f"http://localhost:8080/map_switch"
+        params = {
+            "robot_name": robot_name,
+            "map": map_name
+        }
         try:
-            response = requests.post(path)
+            response = requests.post(path, params=params)
 
             # Check for a 200 OK status explicitly
             if response.status_code == 200:
@@ -169,7 +179,7 @@ class RobotAPI:
     def position(self, robot_name: str):
         ''' Return [x, y, theta] expressed in the robot's coordinate frame or
         None if any errors are encountered '''
-        robot_status = self.get_robot_status()
+        robot_status = self.get_robot_status(robot_name)
         if robot_status:
             robot_pos = [robot_status["data"]["position"]["x"], robot_status["data"]["position"]["y"], robot_status["data"]["position"]["yaw"]]
             return robot_pos
@@ -179,7 +189,7 @@ class RobotAPI:
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
         and 1.0. Else return None if any errors are encountered. '''
-        robot_status = self.get_robot_status()
+        robot_status = self.get_robot_status(robot_name)
         if robot_status:
             return float(robot_status["data"]["battery"]/100.0)
         else:
@@ -188,28 +198,31 @@ class RobotAPI:
     def map(self, robot_name: str):
         ''' Return the name of the map that the robot is currently on or
         None if any errors are encountered. '''
-        robot_status = self.get_robot_status()
+        robot_status = self.get_robot_status(robot_name)
         if robot_status:
             return robot_status["data"]["map_name"]
         else:
             return None
 
-    def is_command_completed(self):
+    def is_command_completed(self, robot_name: str):
         ''' Return True if the robot has completed its last command, else
         return False. '''
-        robot_status = self.get_robot_status()
+        robot_status = self.get_robot_status(robot_name)
         if robot_status:
             return robot_status["data"]["completed_request"]
         else:
             return True
 
-    def get_robot_status(self):
+    def get_robot_status(self, robot_name: str):
         path="http://localhost:8080/status"
         headers = {
             "accept": "application/json"
         }
+        params = {
+            "robot_name": robot_name
+        }
         try:
-            response = requests.get(path, headers=headers)
+            response = requests.get(path, headers=headers, params=params)
             response.raise_for_status()  # Raise an exception for HTTP errors (4xx or 5xx)
             return response.json()
         except requests.exceptions.ConnectionError as e:
