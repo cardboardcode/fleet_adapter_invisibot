@@ -1,0 +1,17 @@
+<?xml version='1.0' ?>
+
+<launch>
+  <!-- Fleet Adapter Parameters -->
+  <arg name="config_file" default="/fleet_adapter_invisibot_ws/src/fleet_adapter_invisibot/config.yaml"/>
+  <arg name="nav_graph_file" default="/fleet_adapter_invisibot_ws/src/fleet_adapter_invisibot/nav_graph.yaml"/>
+  <arg name="server_uri" default="ws://localhost:8000/_internal"/>
+
+  <!-- Fleet Adapter Invisibot  -->
+  <node pkg="fleet_adapter_invisibot"
+        exec="fleet_adapter"
+        args="--config_file $(var config_file) --nav_graph $(var nav_graph_file) --server_uri $(var server_uri)"
+        output="both">
+  </node>
+
+</launch>
+
