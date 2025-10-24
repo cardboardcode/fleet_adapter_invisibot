@@ -13,5 +13,19 @@
         output="both">
   </node>
 
+  <!-- Fleet Adapter Invisibot Ingestor/Dropoff -->
+  <node pkg="fleet_adapter_invisibot"
+        exec="ingestor_adapter"
+        args="--config_file $(var config_file)"
+        output="both">
+  </node>
+
+  <!-- Fleet Adapter Invisibot Dispensor/Pickup -->
+  <node pkg="fleet_adapter_invisibot"
+        exec="dispenser_adapter"
+        args="--config_file $(var config_file)"
+        output="both">
+  </node>
+
 </launch>
 

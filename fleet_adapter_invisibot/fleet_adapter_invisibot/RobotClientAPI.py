@@ -34,6 +34,7 @@ class RobotAPI:
         self.prefix = config_yaml['prefix']
         self.timeout = 5.0
         self.debug = False
+        self.last_actions = {}
 
         print(f"self.is_able_to_connect() = {self.is_able_to_connect()}")
         while not self.is_able_to_connect():
@@ -98,6 +99,7 @@ class RobotAPI:
             
             if response.status_code == 200:
                 self.logger.info(f"Response Body: {response.text}")
+                self.last_actions[robot_name] = "navigate"
                 return True
 
             self.logger.info(f"Response Body: {response.text}")
@@ -118,9 +120,22 @@ class RobotAPI:
         or begin cleaning a zone for a cleaning robot.
         Return True if process has started/is queued successfully, else
         return False '''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
+        self.logger.warn(f"ACTIVITY = {activity} ---------------------------------###############################3")
+        self.last_actions[robot_name] = activity
+        if activity == "clean":
+            cleaning_zone = label.get("zone")
+            self.logger.warn(f"[RobotClientAPI] [{robot_name}] is cleaning [{cleaning_zone}]")
+            return self.clean(robot_name, cleaning_zone)
+        elif activity == "delivery_pickup":
+            delivery_item = label.get("item")
+            self.logger.warn(f"[RobotClientAPI] [{robot_name}] is picking up [{delivery_item}]")
+            return True
+        elif activity == "delivery_dropoff":
+            delivery_item = label.get("item")
+            self.logger.warn(f"[RobotClientAPI] [{robot_name}] is dropping off [{delivery_item}]")
+            return True
+        else:
+            self.logger.warn(f"[RobotClientAPI] Unknown activity called: {activity}")
         return False
 
     def stop(self, robot_name: str) -> bool:
@@ -207,11 +222,25 @@ class RobotAPI:
     def is_command_completed(self, robot_name: str):
         ''' Return True if the robot has completed its last command, else
         return False. '''
-        robot_status = self.get_robot_status(robot_name)
-        if robot_status:
-            return robot_status["data"]["completed_request"]
-        else:
+        last_action = self.last_actions.get(robot_name)
+        self.logger.info(f"[RobotClientAPI] Checking [{last_action}] completion...")
+        if last_action == "navigate":
+            robot_status = self.get_robot_status(robot_name)
+            if robot_status:
+                return robot_status["data"]["completed_request"]
+            else:
+                return True
+        elif last_action == "clean":
+            return self.is_cleaning_completed(robot_name)
+        elif last_action == "delivery_pickup":
+            self.logger.info(f"[RobotClientAPI] Delivery pickup complete")
             return True
+        elif last_action == "delivery_dropoff":
+            self.logger.info(f"[RobotClientAPI] Delivery dropoff complete")
+            return True
+        else:
+            self.logger.warn(f"[RobotClientAPI] Unknown last action: {last_action}")
+            return False
 
     def get_robot_status(self, robot_name: str):
         path="http://localhost:8080/status"
@@ -244,6 +273,12 @@ class RobotAPI:
         if not (map is None or position is None or battery_soc is None):
             return RobotUpdateData(robot_name, map, position, battery_soc)
         return None
+    
+    def is_cleaning_completed(self, robot_name: str):
+        ''' Return True if the robot has completed cleaning, else
+        return False. '''
+        self.logger.warn("[RobotClientAPI] Cleaning completed...")
+        return True
 
 
 class RobotUpdateData:

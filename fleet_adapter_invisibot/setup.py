@@ -25,7 +25,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'fleet_adapter=fleet_adapter_invisibot.fleet_adapter:main'
+            'fleet_adapter=fleet_adapter_invisibot.fleet_adapter:main',
+            'dispenser_adapter=fleet_adapter_invisibot.dispenser_adapter:main',
+            'ingestor_adapter=fleet_adapter_invisibot.ingestor_adapter:main'
         ],
     },
 )

@@ -48,16 +48,16 @@ levels:
     vertices:
     - - 2.433118512467853
       - -4.4799017646646435
-      - {name: next_to_home_L1}
+      - {dropoff_ingestor: invisibot_ingestor, mutex: '', name: next_to_home_L1, pickup_dispenser: invisibot_dispenser}
     - - 3.6117324662967256
       - -4.484830933849613
-      - {is_charger: false, name: home_L1}
+      - {is_charger: false, mutex: mutex_3, name: home_L1}
     - - 3.63262718347075
       - -1.0205860298012892
-      - {name: opposite_home_L1}
+      - {is_cleaning_zone: true, mutex: mutex_4, name: opposite_home_L1}
     - - 2.4918035267266494
       - -0.9929020795989092
-      - {is_parking_spot: true, name: next_to_opposite_home_L1}
+      - {is_parking_spot: true, mutex: '', name: next_to_opposite_home_L1}
     - - 3.6117324662967256
       - -4.859618297759661
       - {dock_name: charger_L1, is_charger: true, name: charger_L1}
@@ -117,10 +117,10 @@ levels:
       - {name: home_L2}
     - - 2.4736220574832766
       - -4.443339784539584
-      - {name: next_to_home_L2}
+      - {dropoff_ingestor: invisibot_ingestor, name: next_to_home_L2, pickup_dispenser: invisibot_dispenser}
     - - 2.465838837594489
       - -1.0632869190878917
-      - {name: next_to_opposite_home_L2}
+      - {is_cleaning_zone: true, name: next_to_opposite_home_L2}
     - - 4.96291830358279
       - -2.2982812683076497
       - {lift: A, lift_cabin: A, name: inside_lift_L2}

@@ -2,7 +2,7 @@
 # RMF Fleet parameters
 
 rmf_fleet:
-  name: "turtlebot3"
+  name: "invisibot"
   limits:
     linear: [0.5, 0.75] # velocity, acceleration
     angular: [0.6, 2.0] # velocity, acceleration
@@ -29,14 +29,18 @@ rmf_fleet:
   account_for_battery_drain: False
   task_capabilities: # Specify the types of RMF Tasks that robots in this fleet are capable of performing
     loop: True
-    delivery: False
-  actions: ["some_action_here"]
+    clean: True
+    delivery: True
+  actions: ["clean"]
   finishing_request: "nothing" # [park, charge, nothing]
-  responsive_wait: False # Should responsive wait be on/off for the whole fleet by default? False if not specified.
+  responsive_wait: True # Should responsive wait be on/off for the whole fleet by default? False if not specified.
   robots:
     robot0:
         charger: "charger_L1"
-        responsive_wait: False # Should responsive wait be on/off for this specific robot? Overrides the fleet-wide setting.
+        responsive_wait: True # Should responsive wait be on/off for this specific robot? Overrides the fleet-wide setting.
+    robot1:
+        charger: "charger_L1"
+        responsive_wait: True # Should responsive wait be on/off for this specific robot? Overrides the fleet-wide setting.
 
   robot_state_update_frequency: 1.0 # Hz
 

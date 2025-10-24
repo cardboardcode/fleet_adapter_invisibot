@@ -204,7 +204,7 @@ class RobotAdapter:
                 destination, execution
             ),
             lambda activity: self.stop(activity),
-            lambda category, description, execution: self.perform_action(
+            lambda category, description, execution: self.execute_action(
                 category, description, execution
             )
         )
@@ -249,9 +249,7 @@ class RobotAdapter:
         You may wish to use RobotAPI.start_activity to trigger different
         types of actions to your robot.'''
         self.execution = execution
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
+        self.api.start_activity(robot_name=self.name, activity=category, label=description)
         return
 
 
