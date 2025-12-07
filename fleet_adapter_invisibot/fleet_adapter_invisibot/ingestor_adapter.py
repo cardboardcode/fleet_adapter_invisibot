@@ -115,8 +115,7 @@ class WorkcellNode(Node):
                 self.get_logger().info(f"Handling request: {current_request}") 
                 with self._state_lock:
                     self._state.mode = DispenserState.BUSY
-                
-                
+
                 # Bring up the app to confirm user confirmation.
                 self.get_logger().warn("SETTING APP TO TRUE")
                 self.set_app_status(should_app_be_up=True)
@@ -131,7 +130,7 @@ class WorkcellNode(Node):
                 while is_waiting_for_user_acknowledgment:
                     current_time = time.time()
                     elapsed_time = current_time - start_time
-                    if elapsed_time > 60:
+                    if elapsed_time > 30:
                         self.get_logger().warn(f"[ingestor] - Timeout reached. Moving on...") 
                         is_waiting_for_user_acknowledgment = False
                         break

@@ -130,7 +130,7 @@ class WorkcellNode(Node):
                 while is_waiting_for_user_acknowledgment:
                     current_time = time.time()
                     elapsed_time = current_time - start_time
-                    if elapsed_time > 60:
+                    if elapsed_time > 30:
                         self.get_logger().warn(f"[dispensor] - Timeout reached. Moving on...") 
                         is_waiting_for_user_acknowledgment = False
                         break
