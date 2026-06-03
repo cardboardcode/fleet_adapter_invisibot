@@ -7,6 +7,7 @@ TRAJECTORY_SERVER_URL="ws://localhost:8000/_internal"
 docker run -it --rm \
 	--name fleet_adapter_invisibot_c \
 	--network host \
+	-e RCL_LOG_LEVEL=debug \
 	-e RCUTILS_COLORIZED_OUTPUT=1 \
 	-e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
 	-v ./fleet_adapter_invisibot/config.yaml:$CONFIG_FILE \
