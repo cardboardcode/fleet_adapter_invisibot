@@ -1,0 +1,8 @@
+# Ignore all files and folders by default
+*
+
+# Do not ignore the directory itself, otherwise Git won't scan inside it
+!default/
+
+# Optional: Do not ignore the .gitignore file itself
+!.gitignore
