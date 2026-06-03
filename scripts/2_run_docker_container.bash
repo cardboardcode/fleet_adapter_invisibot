@@ -14,9 +14,10 @@ docker run -it --rm \
     -v ./fleet_adapter_invisibot/nav_graph.yaml:$NAV_GRAPH_FILE \
 fleet_adapter_invisibot:jazzy bash -c \
 "source /ros_entrypoint.sh && \
-ros2 launch fleet_adapter_invisibot run.launch.xml \
+ros2 launch fleet_adapter_invisibot fleet_adapter.launch.xml \
 config_file:=$CONFIG_FILE \
 nav_graph_file:=$NAV_GRAPH_FILE \
-server_uri:=$TRAJECTORY_SERVER_URL"
+server_uri:=$TRAJECTORY_SERVER_URL \
+use_sim_time:=true"
 
 unset CONFIG_FILE NAV_GRAPH_FILE
