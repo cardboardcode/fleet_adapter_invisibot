@@ -36,7 +36,6 @@ class RobotAPI:
         self.debug = False
         self.last_actions = {}
 
-        print(f"self.is_able_to_connect() = {self.is_able_to_connect()}")
         while not self.is_able_to_connect():
             print(f"self.is_able_to_connect() = {self.is_able_to_connect()}")
             self.logger.warn(f"Failed to connect to invisibot. Reattempting after 5 seconds...")
