@@ -60,7 +60,7 @@ docker run -it --rm \
     -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
     -v "$HOST_CONFIG_FILE:$CONFIG_FILE" \
     -v "$HOST_NAV_GRAPH_FILE:$NAV_GRAPH_FILE" \
-    fleet_adapter_invisibot:jazzy bash -c \
+ghcr.io/cardboardcode/fleet_adapter_invisibot:jazzy_clean bash -c \
 "source /ros_entrypoint.sh && \
 ros2 launch fleet_adapter_invisibot fleet_adapter.launch.xml \
 config_file:=$CONFIG_FILE \
