@@ -36,7 +36,6 @@ class RobotAPI:
         self.debug = False
         self.last_actions = {}
 
-        print(f"self.is_able_to_connect() = {self.is_able_to_connect()}")
         while not self.is_able_to_connect():
             print(f"self.is_able_to_connect() = {self.is_able_to_connect()}")
             self.logger.warn(f"Failed to connect to invisibot. Reattempting after 5 seconds...")
@@ -69,7 +68,7 @@ class RobotAPI:
         pose,
         map_name: str,
         speed_limit=0.0
-    ):
+    ) -> bool:
         ''' Request the robot to navigate to pose:[x,y,theta] where x, y and
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
@@ -109,18 +108,29 @@ class RobotAPI:
             self.logger.error(f"In [navigate]: Other error: {err}")
         return False
 
+    def clean(
+        self,
+        robot_name: str,
+        cleaning_zone: str
+    ) -> bool:
+        ############################
+        # IMPLEMENT YOUR CODE HERE #
+        ############################
+
+        return True
+
     def start_activity(
         self,
         robot_name: str,
         activity: str,
         label: str
-    ):
+    ) -> bool:
         ''' Request the robot to begin a process. This is specific to the robot
         and the use case. For example, load/unload a cart for Deliverybot
         or begin cleaning a zone for a cleaning robot.
         Return True if process has started/is queued successfully, else
         return False '''
-        self.logger.warn(f"ACTIVITY = {activity} ---------------------------------###############################3")
+        self.logger.warn(f"ACTIVITY = {activity} ---------------------------------###############################")
         self.last_actions[robot_name] = activity
         if activity == "clean":
             cleaning_zone = label.get("zone")
@@ -164,7 +174,7 @@ class RobotAPI:
             print(f"An unexpected error occurred during the POST request: {e}")
             return False
 
-    def change_map(self, robot_name: str, map_name: str):
+    def change_map(self, robot_name: str, map_name: str) -> bool:
         ''' Command the robot to change map.
             Return True if robot has successfully changed map. Else False. '''
         path=f"http://localhost:8080/map_switch"
