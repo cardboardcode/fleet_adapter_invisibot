@@ -1,4 +1,4 @@
-ARG ROS_DISTRO=jazzy
+ARG ROS_DISTRO=kilted
 
 # ==========================================
 # Builder
@@ -10,12 +10,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         cmake \
-    && pip3 install --no-cache-dir \
-        flask-socketio \
-        fastapi \
-        uvicorn \
-        nudged \
-        --break-system-packages \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /fleet_adapter_invisibot_ws
@@ -43,7 +37,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN pip3 install --no-cache-dir \
         flask-socketio \
-        fastapi \
         uvicorn \
         nudged \
         --break-system-packages
