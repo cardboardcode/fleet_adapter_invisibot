@@ -6,6 +6,7 @@
   <arg name="nav_graph_file" default="/fleet_adapter_invisibot_ws/src/fleet_adapter_invisibot/nav_graph.yaml"/>
   <arg name="server_uri" default="ws://localhost:8000/_internal"/>
   <arg name="use_sim_time" default="true" description="Use the /clock topic for time to sync with simulation"/>
+  <arg name="enable_workcell" default="true"/>
 
   <!-- Fleet Adapter Invisibot  -->
   <group if="$(var use_sim_time)">
@@ -27,19 +28,21 @@
     </node>
   </group>
 
-  <!-- Fleet Adapter Invisibot Ingestor/Dropoff -->
-  <!-- <node pkg="fleet_adapter_invisibot" -->
-        <!-- exec="ingestor_adapter" -->
-        <!-- args="\-\-config_file $(var config_file)" -->
-        <!-- output="both"> -->
-  <!-- </node> -->
+  <group if="$(var enable_workcell)">
+    <!-- Fleet Adapter Invisibot Ingestor/Dropoff -->
+    <node pkg="fleet_adapter_invisibot"
+          exec="ingestor_adapter"
+          args="--config_file $(var config_file)"
+          output="both">
+    </node>
 
-  <!-- Fleet Adapter Invisibot Dispensor/Pickup -->
-  <!-- <node pkg="fleet_adapter_invisibot" -->
-        <!-- exec="dispenser_adapter" -->
-        <!-- args="\-\-config_file $(var config_file)" -->
-        <!-- output="both"> -->
-  <!-- </node> -->
+    <!-- Fleet Adapter Invisibot Dispensor/Pickup -->
+    <node pkg="fleet_adapter_invisibot"
+          exec="dispenser_adapter"
+          args="--config_file $(var config_file)"
+          output="both">
+    </node>
+  </group>
 
 </launch>
 
