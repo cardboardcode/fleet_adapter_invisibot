@@ -113,10 +113,7 @@ class RobotAPI:
         robot_name: str,
         cleaning_zone: str
     ) -> bool:
-        ############################
-        # IMPLEMENT YOUR CODE HERE #
-        ############################
-
+        self.logger.warn(f"[RobotClientAPI] [{robot_name}] is cleaning [{cleaning_zone}]")
         return True
 
     def start_activity(
@@ -134,7 +131,6 @@ class RobotAPI:
         self.last_actions[robot_name] = activity
         if activity == "clean":
             cleaning_zone = label.get("zone")
-            self.logger.warn(f"[RobotClientAPI] [{robot_name}] is cleaning [{cleaning_zone}]")
             return self.clean(robot_name, cleaning_zone)
         elif activity == "delivery_pickup":
             delivery_item = label.get("item")
