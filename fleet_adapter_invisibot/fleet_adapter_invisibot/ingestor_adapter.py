@@ -3,14 +3,9 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, HistoryPolicy, ReliabilityPolicy
 import sys
 import argparse
-import yaml
-import json
 import threading
 import time
-import requests
 
-from rmf_fleet_msgs.msg import FleetState
-from rmf_dispenser_msgs.msg import DispenserState, DispenserRequest, DispenserResult
 from rmf_ingestor_msgs.msg import IngestorState, IngestorRequest, IngestorResult
 
 class WorkcellNode(Node):
@@ -34,7 +29,11 @@ class WorkcellNode(Node):
             IngestorRequest,
             "/ingestor_requests",
             self.request_callback,
-            QoSProfile(history=HistoryPolicy.KEEP_LAST, depth=10, reliability=ReliabilityPolicy.RELIABLE)
+            QoSProfile(
+                history=HistoryPolicy.KEEP_LAST,
+                depth=10,
+                reliability=ReliabilityPolicy.RELIABLE
+                )
         )
         self._state_pub = self.create_publisher(
             IngestorState,
@@ -50,7 +49,7 @@ class WorkcellNode(Node):
         # Initialize workcell state
         self._state.time = (self.get_clock().now().to_msg())
         self._state.guid = self._guid
-        self._state.mode = DispenserState.IDLE
+        self._state.mode = IngestorState.IDLE
         self._state.request_guid_queue = []
 
         self._running = True
@@ -67,10 +66,7 @@ class WorkcellNode(Node):
 
     def make_response(self, status: int, request_guid: str, guid: str):
         """Makes a Result message of the corresponding type."""
-        if self._workcell_type == "dispenser":
-            response = DispenserResult()
-        elif self._workcell_type == "ingestor":
-            response = IngestorResult()
+        response = IngestorResult()
         response.time = self._state.time
         response.request_guid = request_guid
         response.source_guid = guid
@@ -92,7 +88,7 @@ class WorkcellNode(Node):
             with self._requests_queue_lock:
                 if msg.request_guid in self._past_request_guids:
                     self.get_logger().warn(f"Request already succeeded: [{msg.request_guid}]")
-                    self.send_response(DispenserResult.SUCCESS, msg.request_guid)
+                    self.send_response(IngestorResult.SUCCESS, msg.request_guid)
                 elif msg in self._requests_queue:
                     self.get_logger().warn(f"Request already in queue: [{msg.request_guid}]")
                 else:
@@ -100,7 +96,6 @@ class WorkcellNode(Node):
                     with self._state_lock:
                         self._state.request_guid_queue.append(msg.request_guid)
                     self._requests_queue.append(msg)
-                    self.send_response(DispenserResult.ACKNOWLEDGED, msg.request_guid)
         else:
             self.get_logger().warn(f"No matching target_guid found for {msg.target_guid}...")
         
@@ -114,11 +109,14 @@ class WorkcellNode(Node):
                 """Perform action"""
                 self.get_logger().info(f"Handling request: {current_request}") 
                 with self._state_lock:
-                    self._state.mode = DispenserState.BUSY
+                    self._state.mode = IngestorState.BUSY
 
                 # Bring up the app to confirm user confirmation.
-                self.get_logger().warn("SETTING APP TO TRUE")
+                self.get_logger().warn(f"#" * 30)
+                self.get_logger().warn("SETTING APP TO [TRUE]...")
+                self.get_logger().warn(f"#" * 30)
                 self.set_app_status(should_app_be_up=True)
+
                 # Wait for app status to update
                 is_waiting_for_user_acknowledgment = self.get_app_status
                 while not is_waiting_for_user_acknowledgment:
@@ -126,28 +124,31 @@ class WorkcellNode(Node):
                     time.sleep(1)
 
                 # Wait for user to acknowledge before informing RMF of workcell SUCCESS state.
-                start_time = time.time()
-                while is_waiting_for_user_acknowledgment:
-                    current_time = time.time()
-                    elapsed_time = current_time - start_time
-                    if elapsed_time > 30:
-                        self.get_logger().warn(f"[ingestor] - Timeout reached. Moving on...") 
-                        is_waiting_for_user_acknowledgment = False
-                        break
-                    is_waiting_for_user_acknowledgment = self.get_app_status()
-                    self.get_logger().info(f"[ingestor] - Waiting for user acknowledgement...") 
-                    time.sleep(5)
+                max_count = 30
+                count = 0
+                while max_count != count:
+                    # Check for external changes to app. Simulating user acknowledgement.
+                    self.get_logger().warn(f"[{count}/{max_count}][ingestor] - Waiting for user acknowledgement...")
+                    count += 1
+                    time.sleep(1)
+                
+                self.get_logger().warn(f"[ingestor] - Timeout reached. Moving on...") 
+                is_waiting_for_user_acknowledgment = False
+                self.get_logger().warn(f"#" * 30)
+                self.get_logger().warn("SETTING APP TO [FALSE]...")
+                self.get_logger().warn(f"#" * 30)
+                self.set_app_status(should_app_be_up=False)
 
                 if not is_waiting_for_user_acknowledgment:
                     with self._requests_queue_lock:
                         self._requests_queue.pop(0)
                     self._past_request_guids.append(current_request.request_guid)
-                    self.send_response(DispenserResult.SUCCESS, current_request.request_guid)
+                    self.send_response(IngestorResult.SUCCESS, current_request.request_guid)
                 else:
-                    self.send_response(DispenserResult.FAILED, current_request.request_guid)
+                    self.send_response(IngestorResult.FAILED, current_request.request_guid)
                 with self._state_lock:
                     self._state.request_guid_queue.remove(current_request.request_guid)
-                    self._state.mode = DispenserState.IDLE
+                    self._state.mode = IngestorState.IDLE
 
     def get_app_status(self) -> bool:
         # DEBUG
