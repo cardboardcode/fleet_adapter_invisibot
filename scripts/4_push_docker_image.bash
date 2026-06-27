@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker push ghcr.io/cardboardcode/fleet_adapter_invisibot:jazzy_delivery
+docker push ghcr.io/cardboardcode/fleet_adapter_invisibot:jazzy
