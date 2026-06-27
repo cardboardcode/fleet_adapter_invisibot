@@ -143,11 +143,19 @@ def main(argv=sys.argv):
             # Update all the robots in parallel using a thread pool
             update_jobs = []
             for robot in robots.values():
-                update_jobs.append(update_robot(robot))
+                    if robot.update_handle is None:
+                        time.sleep(0.2)  # 200ms breathing room for DDS
+                    update_jobs.append(update_robot(robot))
 
             asyncio.get_event_loop().run_until_complete(
-                asyncio.wait(update_jobs)
-            )
+                    asyncio.wait(update_jobs)
+                )
+
+            current_time = time.time()
+            for robot in robots.values():
+                if robot.is_pending and (current_time - robot.last_attempt_time > 15.0):
+                    robot.get_logger().warn(f"Registration timeout for {robot.name}. Retrying...")
+                    robot.update_handle = None # Trigger retry in next loop
 
             next_wakeup = now + Duration(nanoseconds=update_period*1e9)
             while node.get_clock().now() < next_wakeup:
@@ -185,6 +193,8 @@ class RobotAdapter:
         self.node = node
         self.api = api
         self.fleet_handle = fleet_handle
+        self.is_pending = False
+        self.last_attempt_time = 0
 
     def update(self, state):
         activity_identifier = None
@@ -278,6 +288,10 @@ def update_robot(robot: RobotAdapter):
     )
 
     if robot.update_handle is None:
+        # Mark as pending and record time
+        robot.is_pending = True
+        robot.last_attempt_time = time.time()
+
         robot.update_handle = robot.fleet_handle.add_robot(
             robot.name,
             state,
@@ -285,6 +299,9 @@ def update_robot(robot: RobotAdapter):
             robot.make_callbacks()
         )
         return
+
+    if robot.is_pending:
+        robot.is_pending = False
 
     robot.update(state)
 
