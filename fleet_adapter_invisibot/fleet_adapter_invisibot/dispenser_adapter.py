@@ -1,22 +1,39 @@
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, HistoryPolicy, ReliabilityPolicy
-import sys
+# Copyright 2026 Bey Hao Yun.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
+import sys
 import threading
 import time
 
-from rmf_dispenser_msgs.msg import DispenserState, DispenserRequest, DispenserResult
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+from rmf_dispenser_msgs.msg import DispenserRequest, DispenserResult, DispenserState
+
 
 class WorkcellNode(Node):
     """
     Workcell device in RMF network.
+
     Handles ROS 2 communication to receive requests, send status updates and responses.
     """
 
     def __init__(self, workcell_type, workcell_name, workcell_guid):
         super().__init__(workcell_name)
-        self.get_logger().info(f"Initializing {workcell_name} adapter...")
+        self.get_logger().info(f'Initializing {workcell_name} adapter...')
         # Initialize member variables
         self._guid = workcell_guid
         self._workcell_type = workcell_type
@@ -26,18 +43,22 @@ class WorkcellNode(Node):
         # Publishers and Subscribers
         self._request_sub = self.create_subscription(
             DispenserRequest,
-            "/dispenser_requests",
+            '/dispenser_requests',
             self.request_callback,
-            QoSProfile(history=HistoryPolicy.KEEP_LAST, depth=10, reliability=ReliabilityPolicy.RELIABLE)
+            QoSProfile(
+                history=HistoryPolicy.KEEP_LAST,
+                depth=10,
+                reliability=ReliabilityPolicy.RELIABLE
+                )
         )
         self._state_pub = self.create_publisher(
             DispenserState,
-            "/dispenser_states",
+            '/dispenser_states',
             10
         )
         self._result_pub = self.create_publisher(
             DispenserResult,
-            "/dispenser_results",
+            '/dispenser_results',
             10
         )
 
@@ -60,7 +81,7 @@ class WorkcellNode(Node):
         self._requests_queue_thread.start()
 
     def make_response(self, status: int, request_guid: str, guid: str):
-        """Makes a Result message of the corresponding type."""
+        """Make a Result message of the corresponding type."""
         response = DispenserResult()
         response.time = self._state.time
         response.request_guid = request_guid
@@ -69,49 +90,52 @@ class WorkcellNode(Node):
         return response
 
     def send_response(self, status: int, request_guid: str):
-        """Sends a Result message."""
+        """Send a Result message."""
         response = self.make_response(status, request_guid, self._guid)
-        self.get_logger().info(f"Publishing to result topic  : {response}")
+        self.get_logger().info(f'Publishing to result topic  : {response}')
         self._result_pub.publish(response)
 
     def request_callback(self, msg):
-        """Callback for Request messages."""
-        self.get_logger().warn(f"Received dispenser request...")
+        """Process callback for Request messages."""
+        self.get_logger().warn('Received dispenser request...')
         # Check if request is for self
         if self._guid == msg.target_guid:
             # Check if task has been completed previously
             with self._requests_queue_lock:
                 if msg.request_guid in self._past_request_guids:
-                    self.get_logger().warn(f"Request already succeeded: [{msg.request_guid}]. Ignoring...")
+                    self.get_logger().warn(
+                        f'Request already succeeded: [{msg.request_guid}]. Ignoring...'
+                        )
                     self.send_response(DispenserResult.SUCCESS, msg.request_guid)
                 elif msg in self._requests_queue:
-                    self.get_logger().warn(f"Request already in queue: [{msg.request_guid}]. Ignoring...")
+                    self.get_logger().warn(
+                        f'Request already in queue: [{msg.request_guid}]. Ignoring...'
+                        )
                 else:
-                    self.get_logger().info(f"Received new request: {msg}")
+                    self.get_logger().info(f'Received new request: {msg}')
                     with self._state_lock:
                         self._state.request_guid_queue.append(msg.request_guid)
                     self._requests_queue.append(msg)
         else:
-            self.get_logger().warn(f"No matching target_guid found for {msg.target_guid}...")
+            self.get_logger().warn(f'No matching target_guid found for {msg.target_guid}...')
 
-        
     def handle_requests(self):
-        """Handles requests in requests queue."""
-        self.get_logger().info("Starting thread to handle requests")
+        """Handle requests in requests queue."""
+        self.get_logger().info('Starting thread to handle requests')
         while self._running:
             if self._requests_queue:
                 with self._requests_queue_lock:
                     current_request = self._requests_queue[0]
 
                 """Perform action"""
-                self.get_logger().info(f"Handling request: {current_request}") 
+                self.get_logger().info(f'Handling request: {current_request}')
                 with self._state_lock:
                     self._state.mode = DispenserState.BUSY
 
                 # Bring up the app to confirm user confirmation.
-                self.get_logger().warn(f"#" * 30)
-                self.get_logger().warn("SETTING APP TO [TRUE]")
-                self.get_logger().warn(f"#" * 30)
+                self.get_logger().warn('#'*30)
+                self.get_logger().warn('SETTING APP TO [TRUE]...')
+                self.get_logger().warn('#'*30)
                 self.set_app_status(should_app_be_up=True)
                 # Wait for app status to update
                 is_waiting_for_user_acknowledgment = self.get_app_status
@@ -126,18 +150,20 @@ class WorkcellNode(Node):
                     # Check for external changes to app. Simulating user acknowledgement.
                     is_waiting_for_user_acknowledgment = self.get_app_status()
                     count += 1
-                    self.get_logger().warn(f"[{count}/{max_count}][dispensor] - Waiting for user acknowledgement...")
+                    self.get_logger().warn(
+                        f'[{count}/{max_count}][dispensor] - Waiting for user acknowledgement...'
+                        )
                     time.sleep(1)
 
-                self.get_logger().warn(f"[dispensor] - Timeout reached. Moving on...") 
+                self.get_logger().warn('[dispensor] - Timeout reached. Moving on...')
                 is_waiting_for_user_acknowledgment = False
-                self.get_logger().warn(f"#" * 30)
-                self.get_logger().warn("SETTING APP TO [FALSE]...")
-                self.get_logger().warn(f"#" * 30)
+                self.get_logger().warn('#'*30)
+                self.get_logger().warn('SETTING APP TO [FALSE]...')
+                self.get_logger().warn('#'*30)
                 self.set_app_status(should_app_be_up=False)
 
                 # When no longer waiting for user acknowledgement,
-                # Record the current request as successful and publish 
+                # Record the current request as successful and publish
                 # On ROS 2 topic, /dispenser_results, dispenser success
                 if not is_waiting_for_user_acknowledgment:
                     with self._requests_queue_lock:
@@ -157,13 +183,12 @@ class WorkcellNode(Node):
         self.is_app_up = should_app_be_up
 
     def update_and_publish_state(self):
-        """Updates state time and publishes the State message continuously."""
-        self.get_logger().info("Starting thread to publish workcell state")
+        """Update state time and publishes the State message continuously."""
+        self.get_logger().info('Starting thread to publish workcell state')
         while self._running:
             with self._state_lock:
                 self._state.time = (self.get_clock().now().to_msg())
                 self._state_pub.publish(self._state)
-                # self.get_logger().info(f"Current state is {self._state}")
             time.sleep(1)
 
     def destroy_node(self):
@@ -173,24 +198,25 @@ class WorkcellNode(Node):
         self._requests_queue_thread.join()
         super().destroy_node()
 
+
 def main(argv=sys.argv):
     rclpy.init(args=argv)
     args_without_ros = rclpy.utilities.remove_ros_args(argv)
     parser = argparse.ArgumentParser(
-        prog="fleet_adapter",
-        description="Configure and spin up the workcell adapter")
-    parser.add_argument("-c", "--config_file", type=str, required=True,
-                        help="Path to the config.yaml file")
+        prog='fleet_adapter',
+        description='Configure and spin up the workcell adapter')
+    parser.add_argument('-c', '--config_file', type=str, required=True,
+                        help='Path to the config.yaml file')
     args = parser.parse_args(args_without_ros[1:])
-  
+
     try:
         config_path = args.config_file
         # Load config_yaml
-        with open(config_path, "r") as f:
+        with open(config_path, 'r'):
             # config_yaml = yaml.safe_load(f)
-            workcell_type = "dispenser"
-            workcell_name = "invisibot_dispenser_workcell"
-            workcell_guid = "invisibot_dispenser"
+            workcell_type = 'dispenser'
+            workcell_name = 'invisibot_dispenser_workcell'
+            workcell_guid = 'invisibot_dispenser'
         workcell_node = WorkcellNode(
             workcell_type=workcell_type,
             workcell_name=workcell_name,
