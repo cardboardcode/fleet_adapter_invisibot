@@ -63,8 +63,8 @@ def main(argv=sys.argv):
     args_without_ros = rclpy.utilities.remove_ros_args(argv)
 
     parser = argparse.ArgumentParser(
-        prog="fleet_adapter",
-        description="Configure and spin up the fleet adapter")
+        prog='fleet_adapter',
+        description='Configure and spin up the fleet adapter')
     parser.add_argument("-c", "--config_file", type=str, required=True,
                         help="Path to the config.yaml file")
     parser.add_argument("-n", "--nav_graph", type=str, required=True,
@@ -74,7 +74,7 @@ def main(argv=sys.argv):
     parser.add_argument("-sim", "--use_sim_time", action="store_true",
                         help='Use sim time, default: false')
     args = parser.parse_args(args_without_ros[1:])
-    print(f"Starting fleet adapter...")
+    print(f'Starting fleet adapter...', flush=True)
 
     config_path = args.config_file
     nav_graph_path = args.nav_graph
@@ -99,7 +99,7 @@ def main(argv=sys.argv):
 
     # Enable sim time for testing offline
     if args.use_sim_time:
-        param = Parameter("use_sim_time", Parameter.Type.BOOL, True)
+        param = Parameter('use_sim_time', Parameter.Type.BOOL, True)
         node.set_parameters([param])
         adapter.node.use_sim_time()
 
