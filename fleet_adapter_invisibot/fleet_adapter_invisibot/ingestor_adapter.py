@@ -1,24 +1,39 @@
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, HistoryPolicy, ReliabilityPolicy
-import sys
+# Copyright 2026 Bey Hao Yun.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
+import sys
 import threading
 import time
 
-from rmf_ingestor_msgs.msg import IngestorState, IngestorRequest, IngestorResult
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+from rmf_ingestor_msgs.msg import IngestorRequest, IngestorResult, IngestorState
 
 
 class WorkcellNode(Node):
-
     """
     Workcell device in RMF network.
+
     Handles ROS 2 communication to receive requests, send status updates and responses.
     """
 
     def __init__(self, workcell_type, workcell_name, workcell_guid):
         super().__init__(workcell_name)
-        self.get_logger().info(f'Initializing {workcell_name} adapter...')
+        self.get_logger().info('Initializing {workcell_name} adapter...')
         # Initialize member variables
         self._guid = workcell_guid
         self._workcell_type = workcell_type
@@ -82,7 +97,7 @@ class WorkcellNode(Node):
         self._result_pub.publish(response)
 
     def request_callback(self, msg):
-        """Callback for Request messages."""
+        """Processs callback for Request messages."""
         self.get_logger().warn('Received ingestor request...')
         # Check if request is for self
         if self._guid == msg.target_guid:
@@ -135,7 +150,7 @@ class WorkcellNode(Node):
                         )
                     count += 1
                     time.sleep(1)
-                
+
                 self.get_logger().warn('[ingestor] - Timeout reached. Moving on...')
                 is_waiting_for_user_acknowledgment = False
                 self.get_logger().warn('#'*30)
@@ -168,7 +183,6 @@ class WorkcellNode(Node):
             with self._state_lock:
                 self._state.time = (self.get_clock().now().to_msg())
                 self._state_pub.publish(self._state)
-                # self.get_logger().info(f'Current state is {self._state}')
             time.sleep(1)
 
     def destroy_node(self):

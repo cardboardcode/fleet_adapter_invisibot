@@ -55,6 +55,7 @@ def compute_transforms(level, coords, node=None):
         tf.get_translation()
     )
 
+
 # ------------------------------------------------------------------------------
 # Main
 # ------------------------------------------------------------------------------
@@ -145,9 +146,9 @@ def main(argv=sys.argv):
             # Update all the robots in parallel using a thread pool
             update_jobs = []
             for robot in robots.values():
-                    if robot.update_handle is None:
-                        time.sleep(0.2)  # 200ms breathing room for DDS
-                    update_jobs.append(update_robot(robot))
+                if robot.update_handle is None:
+                    time.sleep(0.2)  # 200ms breathing room for DDS
+                update_jobs.append(update_robot(robot))
 
             asyncio.get_event_loop().run_until_complete(
                     asyncio.wait(update_jobs)
@@ -157,7 +158,7 @@ def main(argv=sys.argv):
             for robot in robots.values():
                 if robot.is_pending and (current_time - robot.last_attempt_time > 15.0):
                     robot.get_logger().warn(f'Registration timeout for {robot.name}. Retrying...')
-                    robot.update_handle = None # Trigger retry in next loop
+                    robot.update_handle = None  # Trigger retry in next loop
 
             next_wakeup = now + Duration(nanoseconds=update_period*1e9)
             while node.get_clock().now() < next_wakeup:
@@ -258,9 +259,12 @@ class RobotAdapter:
                 self.api.stop(self.name)
 
     def execute_action(self, category: str, description: dict, execution):
-        ''' Trigger a custom action you would like your robot to perform.
+        """
+        Trigger a custom action you would like your robot to perform.
+
         You may wish to use RobotAPI.start_activity to trigger different
-        types of actions to your robot.'''
+        types of actions to your robot.
+        """
         self.execution = execution
         self.api.start_activity(robot_name=self.name, activity=category, label=description)
         return

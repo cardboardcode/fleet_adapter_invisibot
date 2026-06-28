@@ -1,16 +1,33 @@
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, HistoryPolicy, ReliabilityPolicy
-import sys
+# Copyright 2026 Bey Hao Yun.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
+import sys
 import threading
 import time
 
-from rmf_dispenser_msgs.msg import DispenserState, DispenserRequest, DispenserResult
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
+
+from rmf_dispenser_msgs.msg import DispenserRequest, DispenserResult, DispenserState
+
 
 class WorkcellNode(Node):
     """
     Workcell device in RMF network.
+
     Handles ROS 2 communication to receive requests, send status updates and responses.
     """
 
@@ -28,7 +45,11 @@ class WorkcellNode(Node):
             DispenserRequest,
             '/dispenser_requests',
             self.request_callback,
-            QoSProfile(history=HistoryPolicy.KEEP_LAST, depth=10, reliability=ReliabilityPolicy.RELIABLE)
+            QoSProfile(
+                history=HistoryPolicy.KEEP_LAST,
+                depth=10,
+                reliability=ReliabilityPolicy.RELIABLE
+                )
         )
         self._state_pub = self.create_publisher(
             DispenserState,
@@ -75,8 +96,8 @@ class WorkcellNode(Node):
         self._result_pub.publish(response)
 
     def request_callback(self, msg):
-        """Callback for Request messages."""
-        self.get_logger().warn(f'Received dispenser request...')
+        """Process callback for Request messages."""
+        self.get_logger().warn('Received dispenser request...')
         # Check if request is for self
         if self._guid == msg.target_guid:
             # Check if task has been completed previously
@@ -97,7 +118,6 @@ class WorkcellNode(Node):
                     self._requests_queue.append(msg)
         else:
             self.get_logger().warn(f'No matching target_guid found for {msg.target_guid}...')
-
 
     def handle_requests(self):
         """Handle requests in requests queue."""
@@ -143,7 +163,7 @@ class WorkcellNode(Node):
                 self.set_app_status(should_app_be_up=False)
 
                 # When no longer waiting for user acknowledgement,
-                # Record the current request as successful and publish 
+                # Record the current request as successful and publish
                 # On ROS 2 topic, /dispenser_results, dispenser success
                 if not is_waiting_for_user_acknowledgment:
                     with self._requests_queue_lock:
@@ -169,7 +189,6 @@ class WorkcellNode(Node):
             with self._state_lock:
                 self._state.time = (self.get_clock().now().to_msg())
                 self._state_pub.publish(self._state)
-                # self.get_logger().info(f'Current state is {self._state}')
             time.sleep(1)
 
     def destroy_node(self):
