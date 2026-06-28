@@ -8,7 +8,9 @@ import time
 
 from rmf_ingestor_msgs.msg import IngestorState, IngestorRequest, IngestorResult
 
+
 class WorkcellNode(Node):
+
     """
     Workcell device in RMF network.
     Handles ROS 2 communication to receive requests, send status updates and responses.
@@ -65,7 +67,7 @@ class WorkcellNode(Node):
         self._requests_queue_thread.start()
 
     def make_response(self, status: int, request_guid: str, guid: str):
-        """Makes a Result message of the corresponding type."""
+        """Make a Result message of the corresponding type."""
         response = IngestorResult()
         response.time = self._state.time
         response.request_guid = request_guid
@@ -74,7 +76,7 @@ class WorkcellNode(Node):
         return response
 
     def send_response(self, status: int, request_guid: str):
-        """Sends a Result message."""
+        """Send a Result message."""
         response = self.make_response(status, request_guid, self._guid)
         self.get_logger().info(f'Publishing to result topic  : {response}')
         self._result_pub.publish(response)
@@ -98,16 +100,16 @@ class WorkcellNode(Node):
                     self._requests_queue.append(msg)
         else:
             self.get_logger().warn(f'No matching target_guid found for {msg.target_guid}...')
-        
+
     def handle_requests(self):
-        """Handles requests in requests queue."""
+        """Handle requests in requests queue."""
         self.get_logger().info('Starting thread to handle requests')
         while self._running:
             if self._requests_queue:
                 with self._requests_queue_lock:
                     current_request = self._requests_queue[0]
                 """Perform action"""
-                self.get_logger().info(f'Handling request: {current_request}') 
+                self.get_logger().info(f'Handling request: {current_request}')
                 with self._state_lock:
                     self._state.mode = IngestorState.BUSY
 
@@ -134,7 +136,7 @@ class WorkcellNode(Node):
                     count += 1
                     time.sleep(1)
                 
-                self.get_logger().warn('[ingestor] - Timeout reached. Moving on...') 
+                self.get_logger().warn('[ingestor] - Timeout reached. Moving on...')
                 is_waiting_for_user_acknowledgment = False
                 self.get_logger().warn('#'*30)
                 self.get_logger().warn('SETTING APP TO [FALSE]...')
@@ -160,13 +162,13 @@ class WorkcellNode(Node):
         self.is_app_up = should_app_be_up
 
     def update_and_publish_state(self):
-        """Updates state time and publishes the State message continuously."""
+        """Update state time and publishes the State message continuously."""
         self.get_logger().info('Starting thread to publish workcell state')
         while self._running:
             with self._state_lock:
                 self._state.time = (self.get_clock().now().to_msg())
                 self._state_pub.publish(self._state)
-                # self.get_logger().info(f"Current state is {self._state}")
+                # self.get_logger().info(f'Current state is {self._state}')
             time.sleep(1)
 
     def destroy_node(self):

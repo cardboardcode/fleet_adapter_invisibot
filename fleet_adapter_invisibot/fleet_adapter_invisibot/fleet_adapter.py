@@ -12,23 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import argparse
-import yaml
-import time
-import threading
 import asyncio
-import nudged
+import sys
 
+import threading
+
+import time
+
+import nudged
 import rclpy
+from rclpy.duration import Duration
 import rclpy.node
 from rclpy.parameter import Parameter
-from rclpy.duration import Duration
-
 import rmf_adapter
 from rmf_adapter import Adapter
-import rmf_adapter.easy_full_control as rmf_easy
 from rmf_adapter import Transformation
+import rmf_adapter.easy_full_control as rmf_easy
+
+import yaml
 
 from .RobotClientAPI import RobotAPI
 
@@ -44,7 +46,7 @@ def compute_transforms(level, coords, node=None):
     if node:
         mse = nudged.estimate_error(tf, rmf_coords, robot_coords)
         node.get_logger().info(
-            f"Transformation error estimate for {level}: {mse}"
+            f'Transformation error estimate for {level}: {mse}'
         )
 
     return Transformation(
@@ -65,16 +67,16 @@ def main(argv=sys.argv):
     parser = argparse.ArgumentParser(
         prog='fleet_adapter',
         description='Configure and spin up the fleet adapter')
-    parser.add_argument("-c", "--config_file", type=str, required=True,
-                        help="Path to the config.yaml file")
-    parser.add_argument("-n", "--nav_graph", type=str, required=True,
-                        help="Path to the nav_graph for this fleet adapter")
-    parser.add_argument("-s", "--server_uri", type=str, required=False, default="",
-                        help="URI of the api server to transmit state and task information.")
-    parser.add_argument("-sim", "--use_sim_time", action="store_true",
+    parser.add_argument('-c', '--config_file', type=str, required=True,
+                        help='Path to the config.yaml file')
+    parser.add_argument('-n', '--nav_graph', type=str, required=True,
+                        help='Path to the nav_graph for this fleet adapter')
+    parser.add_argument('-s', '--server_uri', type=str, required=False, default='',
+                        help='URI of the api server to transmit state and task information.')
+    parser.add_argument('-sim', '--use_sim_time', action='store_true',
                         help='Use sim time, default: false')
     args = parser.parse_args(args_without_ros[1:])
-    print(f'Starting fleet adapter...', flush=True)
+    print('Starting fleet adapter...', flush=True)
 
     config_path = args.config_file
     nav_graph_path = args.nav_graph
@@ -85,7 +87,7 @@ def main(argv=sys.argv):
     assert fleet_config, f'Failed to parse config file [{config_path}]'
 
     # Parse the yaml in Python to get the fleet_manager info
-    with open(config_path, "r") as f:
+    with open(config_path, 'r') as f:
         config_yaml = yaml.safe_load(f)
 
     # ROS 2 node for the command handle
@@ -154,7 +156,7 @@ def main(argv=sys.argv):
             current_time = time.time()
             for robot in robots.values():
                 if robot.is_pending and (current_time - robot.last_attempt_time > 15.0):
-                    robot.get_logger().warn(f"Registration timeout for {robot.name}. Retrying...")
+                    robot.get_logger().warn(f'Registration timeout for {robot.name}. Retrying...')
                     robot.update_handle = None # Trigger retry in next loop
 
             next_wakeup = now + Duration(nanoseconds=update_period*1e9)

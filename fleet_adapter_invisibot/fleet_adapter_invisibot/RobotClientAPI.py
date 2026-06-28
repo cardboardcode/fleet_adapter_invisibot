@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import json
 import time
 import requests
@@ -37,7 +38,8 @@ class RobotAPI:
         self.last_actions = {}
 
         while not self.is_able_to_connect():
-            self.logger.warn(f'Failed to connect to invisibot. Reattempting after 5 seconds...')
+            self.logger.warn('Failed to connect to invisibot. '
+                             'Reattempting after 5 seconds...')
             time.sleep(5)
 
     def is_able_to_connect(self) -> bool:
@@ -133,7 +135,7 @@ class RobotAPI:
             cleaning_zone = label.get('zone')
             return self.clean(robot_name, cleaning_zone)
         elif activity == 'delivery_pickup':
-            delivery_item = label.get("item")
+            delivery_item = label.get('item')
             self.logger.warn(f'[RobotClientAPI] [{robot_name}] is picking up [{delivery_item}]')
             return True
         elif activity == 'delivery_dropoff':
@@ -142,7 +144,7 @@ class RobotAPI:
             return True
         else:
             self.logger.warn(f'[RobotClientAPI] Unknown activity called: {activity}')
-        return False
+            return False
 
     def stop(self, robot_name: str) -> bool:
         ''' Command the robot to stop.
@@ -174,7 +176,7 @@ class RobotAPI:
     def change_map(self, robot_name: str, map_name: str) -> bool:
         ''' Command the robot to change map.
             Return True if robot has successfully changed map. Else False. '''
-        path=f"http://localhost:8080/map_switch"
+        path=f'http://localhost:8080/map_switch'
         params = {
             'robot_name': robot_name,
             'map': map_name
@@ -239,7 +241,7 @@ class RobotAPI:
         if last_action == 'navigate':
             robot_status = self.get_robot_status(robot_name)
             if robot_status:
-                return robot_status["data"]["completed_request"]
+                return robot_status['data']['completed_request']
             else:
                 return True
         elif last_action == 'clean':
@@ -248,19 +250,19 @@ class RobotAPI:
             self.logger.info(f'[RobotClientAPI] Delivery pickup complete')
             return True
         elif last_action == 'delivery_dropoff':
-            self.logger.info(f"[RobotClientAPI] Delivery dropoff complete")
+            self.logger.info(f'[RobotClientAPI] Delivery dropoff complete')
             return True
         else:
-            self.logger.warn(f"[RobotClientAPI] Unknown last action: {last_action}")
+            self.logger.warn(f'[RobotClientAPI] Unknown last action: {last_action}')
             return False
 
     def get_robot_status(self, robot_name: str):
-        path="http://localhost:8080/status"
+        path='http://localhost:8080/status'
         headers = {
-            "accept": "application/json"
+            'accept': 'application/json'
         }
         params = {
-            "robot_name": robot_name
+            'robot_name': robot_name
         }
         try:
             response = requests.get(path, headers=headers, params=params)
@@ -268,7 +270,7 @@ class RobotAPI:
             return response.json()
         except requests.exceptions.ConnectionError as e:
             print(f'Error: Could not connect to the server at {path}. '
-                  'Please ensure the server is running.')
+                  'Please ensure the sensor is running.')
             return None
         except requests.exceptions.Timeout:
             print(f'Error: The request to {path} timed out.')
